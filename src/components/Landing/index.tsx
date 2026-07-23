@@ -5,42 +5,78 @@ import Image from "next/image";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useRef } from "react";
+import dynamic from "next/dynamic";
+
+const Scene = dynamic(() => import("./scene"), { ssr: false });
 
 gsap.registerPlugin(useGSAP);
 
 export default function Landing() {
-    const containerRef = useRef<HTMLElement>(null);
-    const bgImageRef = useRef<HTMLImageElement>(null);
+  const containerRef = useRef<HTMLElement>(null);
+  const bgImageRef = useRef<HTMLImageElement>(null);
 
-    useGSAP(() => {
-        gsap.fromTo(
-            bgImageRef.current,
-            { opacity: 0, scale: 1.08 },
-            {
-                opacity: 0.6,
-                scale: 1,
-                duration: 1.4,
-                ease: "power2.out",
-            }
-        );
-    }, { scope: containerRef });
+  // Mouse coordinate ref (normalized 0 to 1, with UV y flipped)
+  const mouseRef = useRef({ x: 0.5, y: 0.5, hover: false });
 
-    return (
-        <section className={styles.landing} ref={containerRef}>
-            <div className={styles.background}>
-                <Image
-                    ref={bgImageRef}
-                    src="/images/main.jpg"
-                    alt="Landing background"
-                    fill
-                    priority
-                    sizes="100vw"
-                />
-            </div>
+  useGSAP(
+    () => {
+      gsap.fromTo(
+        bgImageRef.current,
+        { opacity: 0, scale: 1.08 },
+        {
+          opacity: 0.35,
+          scale: 1,
+          duration: 1.4,
+          ease: "power2.out",
+        }
+      );
+    },
+    { scope: containerRef }
+  );
 
-            <div className={styles.heading}>
-                <h1>THE SHAPE OF DIGITAL OPTICS</h1>
-            </div>
-        </section>
-    );
+  const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    // Flip Y for WebGL UV space
+    const y = 1 - (e.clientY - rect.top) / rect.height;
+    mouseRef.current = { x, y, hover: true };
+  };
+
+  const handleMouseEnter = () => {
+    mouseRef.current.hover = true;
+  };
+
+  const handleMouseLeave = () => {
+    mouseRef.current.hover = false;
+  };
+
+  return (
+    <section
+      className={styles.landing}
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className={styles.background}>
+        <Image
+          ref={bgImageRef}
+          src="/images/main.jpg"
+          alt="Landing background"
+          fill
+          priority
+          sizes="100vw"
+        />
+      </div>
+
+      <div className={styles.canvasWrapper}>
+        <Scene mouse={mouseRef} />
+      </div>
+
+      <div className={styles.heading}>
+        <h1>THE SHAPE OF DIGITAL OPTICS</h1>
+      </div>
+    </section>
+  );
 }
