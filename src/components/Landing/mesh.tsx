@@ -4,7 +4,25 @@ import React, { useRef, useMemo } from "react";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
 import * as THREE from "three";
-import { LensShaderMaterial } from "@/lib/Shaders";
+import vertexShader from "@/lib/Shaders/vertex.glsl";
+import fragmentShader from "@/lib/Shaders/index.glsl";
+
+const LensShaderMaterial = {
+  uniforms: {
+    uTexture: { value: null },
+    uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+    uHover: { value: 0 },
+    uRadius: { value: 0.18 },
+    uSmoothness: { value: 0.08 },
+    uAspect: { value: 1 },
+    uCoverScale: { value: new THREE.Vector2(1, 1) },
+    uTime: { value: 0 },
+    uDistortion: { value: 0.04 },
+    uAberration: { value: 0.015 },
+  },
+  vertexShader,
+  fragmentShader,
+};
 
 interface LensMeshProps {
   mouse: React.RefObject<{ x: number; y: number; hover: boolean }>;
